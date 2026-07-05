@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  
+  body {
+    font-family: 'Inter', sans-serif;
+    color: #333333;
+    background-color: #F5F5F5;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary-600 hover:bg-primary-700 text-white font-display font-semibold px-4 py-2 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary-600 hover:bg-secondary-700 text-white font-display font-semibold px-4 py-2 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-outline {
+    @apply border border-primary-600 text-primary-600 hover:bg-primary-50 font-display font-medium px-4 py-2 rounded-lg transition-colors duration-200;
+  }
+
+  .input-field {
+    @apply w-full border border-gray-300 rounded-lg px-3 py-2 font-body text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder-gray-400;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-200;
+  }
+
+  .badge-gros {
+    @apply bg-primary-600 text-white text-xs font-display font-semibold px-2 py-0.5 rounded-full;
+  }
+
+  .badge-rupture {
+    @apply bg-red-500 text-white text-xs font-display font-semibold px-2 py-0.5 rounded-full;
+  }
+
+  /* Admin : textes légèrement plus grands */
+  .admin-panel {
+    font-size: 15px;
+  }
+
+  .admin-panel .text-xs {
+    font-size: 0.8125rem;
+    line-height: 1.125rem;
+  }
+
+  .admin-panel .text-sm {
+    font-size: 0.9375rem;
+    line-height: 1.375rem;
+  }
+
+  .admin-panel th.text-xs,
+  .admin-panel th.text-sm {
+    font-size: 0.8125rem;
+  }
+}
+
+/* Leaflet fix */
+.leaflet-container {
+  z-index: 0;
+}
+
+/* Leaflet tiles fix — évite les carreaux gris */
+.leaflet-tile {
+  filter: none !important;
+}
+
+.leaflet-tile-container img {
+  width: 256px !important;
+  height: 256px !important;
+}
+
+/* Fix icônes Leaflet */
+.leaflet-default-icon-path {
+  background-image: url("https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png");
+}

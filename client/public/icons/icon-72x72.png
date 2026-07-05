@@ -1,0 +1,6 @@
+<svg width="72" height="72" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+  <rect width="72" height="72" rx="12.959999999999999" fill="#2E7D32"/>
+  <text x="36" y="27.36" font-family="Arial,sans-serif" font-size="15.84" font-weight="900" fill="white" text-anchor="middle">Allo</text>
+  <text x="36" y="44.64" font-family="Arial,sans-serif" font-size="15.84" font-weight="900" fill="#F57C00" text-anchor="middle">Panier</text>
+  <circle cx="36" cy="56.160000000000004" r="4.32" fill="white" opacity="0.6"/>
+</svg>
