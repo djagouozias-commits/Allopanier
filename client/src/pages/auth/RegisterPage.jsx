@@ -1,9 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, MapPin, Loader } from 'lucide-react'
+import { Eye, EyeOff, MapPin } from 'lucide-react'
 import useAuthStore from '../../store/useAuthStore'
-import { validerSuffixeTelephone, assemblerTelephone } from '../../lib/utils'
-import PhoneInput from '../../components/ui/PhoneInput'
 import Logo from '../../components/ui/Logo'
 import MapModal from '../../components/ui/MapModal'
 import toast from 'react-hot-toast'
@@ -22,22 +20,21 @@ export default function RegisterPage() {
   const navigate = useNavigate()
 
   const [form, setForm] = useState({
-    nom: '', telSuffix: '', telWhatsappSuffix: '', email: '', mot_de_passe: '', confirmation: '',
-    type_client: 'particulier', type_autre: '',
+    nom: '', telephone: '', email: '', mot_de_passe: '', confirmation: '',
+    type_client: 'particulier', type_autre: '', whatsapp: '',
     description_lieu: '', latitude: null, longitude: null,
   })
-  const [whatsappManuel, setWhatsappManuel] = useState(false)
   const [showPwd, setShowPwd] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const [errors, setErrors] = useState({})
   const [mapOpen, setMapOpen] = useState(false)
+  const [mapKey, setMapKey] = useState(0) // forcer le remontage de MapModal
 
   const validate = () => {
     const e = {}
     if (!form.nom.trim()) e.nom = 'Le nom est requis'
-    if (!validerSuffixeTelephone(form.telSuffix)) e.telephone = 'Entrez les 8 chiffres après 01'
-    if (whatsappManuel && form.telWhatsappSuffix && !validerSuffixeTelephone(form.telWhatsappSuffix)) {
-      e.whatsapp = 'WhatsApp invalide — 8 chiffres après 01'
-    }
+    if (/\d/.test(form.nom)) e.nom = 'Le nom ne doit pas contenir de chiffres'
+    if (!form.telephone || form.telephone.length < 10) e.telephone = 'Numéro invalide (ex: 0188441122)'
     if (form.mot_de_passe.length < 6) e.mot_de_passe = 'Minimum 6 caractères'
     if (form.mot_de_passe !== form.confirmation) e.confirmation = 'Les mots de passe ne correspondent pas'
     if (!form.description_lieu.trim()) e.description_lieu = 'Décrivez votre lieu de livraison'
@@ -49,17 +46,13 @@ export default function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!validate()) return
-    const telephone = assemblerTelephone(form.telSuffix)
-    const whatsapp = whatsappManuel && form.telWhatsappSuffix
-      ? assemblerTelephone(form.telWhatsappSuffix)
-      : telephone
     const payload = {
       nom: form.nom,
-      telephone,
+      telephone: form.telephone,
       email: form.email || null,
       mot_de_passe: form.mot_de_passe,
       type_client: form.type_client === 'autre' ? form.type_autre : form.type_client,
-      whatsapp,
+      whatsapp: form.whatsapp || form.telephone,
       adresse: {
         description_lieu: form.description_lieu,
         latitude: form.latitude,
@@ -86,6 +79,7 @@ export default function RegisterPage() {
   return (
     <>
       <MapModal
+        key={mapKey}
         isOpen={mapOpen}
         onClose={() => setMapOpen(false)}
         title="Indiquez votre position de livraison"
@@ -93,6 +87,7 @@ export default function RegisterPage() {
         initialLng={form.longitude}
         onValidate={({ lat, lng }) => {
           setForm(p => ({ ...p, latitude: lat, longitude: lng }))
+          setMapOpen(false)
           toast.success('Position enregistrée')
         }}
       />
@@ -116,18 +111,37 @@ export default function RegisterPage() {
               {/* Nom */}
               <div>
                 <label className="block text-sm font-display font-semibold text-gray-700 mb-1">Nom complet *</label>
-                <input type="text" placeholder="Ex: Kouassi Jean-Baptiste" {...f('nom')} />
+                <input
+                  type="text"
+                  placeholder="Ex: Kouassi Jean-Baptiste"
+                  value={form.nom}
+                  onChange={e => {
+                    // Refuser les chiffres
+                    const val = e.target.value.replace(/[0-9]/g, '')
+                    setForm(p => ({ ...p, nom: val }))
+                  }}
+                  className={`input-field ${errors.nom ? 'border-red-400' : ''}`}
+                />
                 {errors.nom && <p className="text-red-500 text-xs mt-1">{errors.nom}</p>}
               </div>
 
-              {/* Téléphone */}
+              {/* Téléphone — numéro complet */}
               <div>
                 <label className="block text-sm font-display font-semibold text-gray-700 mb-1">Numéro de téléphone *</label>
-                <PhoneInput
-                  suffix={form.telSuffix}
-                  onChange={telSuffix => setForm(p => ({ ...p, telSuffix }))}
-                  error={errors.telephone}
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  placeholder="Ex: 0188441122"
+                  value={form.telephone}
+                  maxLength={10}
+                  onChange={e => {
+                    const val = e.target.value.replace(/\D/g, '')
+                    setForm(p => ({ ...p, telephone: val, whatsapp: p.whatsapp || val }))
+                  }}
+                  className={`input-field ${errors.telephone ? 'border-red-400' : ''}`}
                 />
+                {errors.telephone && <p className="text-red-500 text-xs mt-1">{errors.telephone}</p>}
+                <p className="text-xs text-gray-400 mt-1">Format : 01 + 8 chiffres (ex: 0188441122)</p>
               </div>
 
               {/* Email */}
@@ -138,18 +152,16 @@ export default function RegisterPage() {
 
               {/* WhatsApp */}
               <div>
-                <label className="flex items-center gap-2 cursor-pointer mb-2">
-                  <input type="checkbox" checked={whatsappManuel}
-                    onChange={e => setWhatsappManuel(e.target.checked)} />
-                  <span className="text-sm font-body text-gray-700">WhatsApp différent du téléphone</span>
-                </label>
-                {whatsappManuel && (
-                  <PhoneInput
-                    suffix={form.telWhatsappSuffix}
-                    onChange={telWhatsappSuffix => setForm(p => ({ ...p, telWhatsappSuffix }))}
-                    error={errors.whatsapp}
-                  />
-                )}
+                <label className="block text-sm font-display font-semibold text-gray-700 mb-1">WhatsApp (optionnel)</label>
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  placeholder="Même que le téléphone par défaut"
+                  value={form.whatsapp}
+                  maxLength={10}
+                  onChange={e => setForm(p => ({ ...p, whatsapp: e.target.value.replace(/\D/g, '') }))}
+                  className="input-field"
+                />
               </div>
 
               {/* Type client */}
@@ -169,8 +181,8 @@ export default function RegisterPage() {
                 <div>
                   <label className="block text-sm font-display font-semibold text-gray-700 mb-1">Mot de passe *</label>
                   <div className="relative">
-                    <input type={showPwd ? 'text' : 'password'} placeholder="Min. 6 caractères"
-                      {...f('mot_de_passe')} className={`input-field pr-10 ${errors.mot_de_passe ? 'border-red-400' : ''}`} />
+                    <input type={showPwd ? 'text' : 'password'} placeholder="Min. 6 caractères" {...f('mot_de_passe')}
+                      className={`input-field pr-10 ${errors.mot_de_passe ? 'border-red-400' : ''}`} />
                     <button type="button" onClick={() => setShowPwd(s => !s)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
                       {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -180,22 +192,30 @@ export default function RegisterPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-display font-semibold text-gray-700 mb-1">Confirmer *</label>
-                  <input type="password" placeholder="Répétez" {...f('confirmation')}
-                    className={`input-field ${errors.confirmation ? 'border-red-400' : ''}`} />
+                  <div className="relative">
+                    <input
+                      type={showConfirm ? 'text' : 'password'}
+                      placeholder="Répétez"
+                      {...f('confirmation')}
+                      className={`input-field pr-10 ${errors.confirmation ? 'border-red-400' : ''}`}
+                    />
+                    <button type="button" onClick={() => setShowConfirm(s => !s)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                      {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                   {errors.confirmation && <p className="text-red-500 text-xs mt-1">{errors.confirmation}</p>}
                 </div>
               </div>
 
-              {/* Position GPS */}
+              {/* GPS */}
               <div>
                 <label className="block text-sm font-display font-semibold text-gray-700 mb-2">
                   Position de livraison
                 </label>
-
-                {/* Bouton ouvrir la carte plein écran */}
                 <button
                   type="button"
-                  onClick={() => setMapOpen(true)}
+                  onClick={() => { setMapKey(k => k + 1); setMapOpen(true) }}
                   className={`w-full flex items-center justify-center gap-3 border-2 border-dashed rounded-xl py-4 transition-colors ${
                     form.latitude
                       ? 'border-primary-400 bg-primary-50 text-primary-700'
@@ -211,7 +231,7 @@ export default function RegisterPage() {
                       </>
                     ) : (
                       <>
-                        <p className="font-display font-semibold text-sm">Ouvrir la carte</p>
+                        <p className="font-display font-semibold text-sm">Ouvrir la carte GPS</p>
                         <p className="text-xs font-body">Cliquez pour indiquer votre position</p>
                       </>
                     )}
@@ -231,11 +251,20 @@ export default function RegisterPage() {
                 {errors.description_lieu && <p className="text-red-500 text-xs mt-1">{errors.description_lieu}</p>}
               </div>
 
-              <button type="submit" disabled={isLoading}
-                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-display font-bold py-3 rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-                {isLoading && <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                {isLoading ? 'Création en cours...' : 'Créer mon compte'}
-              </button>
+              {/* Boutons */}
+              <div className="flex flex-col gap-3 pt-2">
+                <button type="submit" disabled={isLoading}
+                  className="w-full bg-primary-600 hover:bg-primary-700 text-white font-display font-bold py-3 rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                  {isLoading && <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                  {isLoading ? 'Création en cours...' : 'Créer mon compte'}
+                </button>
+
+                <Link to="/"
+                  className="block w-full text-center border border-gray-300 text-gray-600 font-display font-semibold py-3 rounded-xl hover:bg-gray-50 transition-colors">
+                  Annuler — Retour à l'accueil
+                </Link>
+              </div>
+
             </form>
 
             <p className="text-center text-sm text-gray-500 font-body mt-4">

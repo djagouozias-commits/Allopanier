@@ -34,7 +34,7 @@ app.use('/api/admin', require('./routes/admin'))
 app.use('/api/medias', require('./routes/medias'))
 app.use('/api/promoflash', require('./routes/promoflash'))
 app.use('/api/publicite', require('./routes/publicite'))
-app.use('/api/promoflash', require('./routes/promoflash'))
+app.use('/api/vip', require('./routes/vip'))
 
 // Santé
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }))
@@ -145,11 +145,11 @@ async function start() {
       const hash = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'Admin@2024', 12)
       await pool.query(
         `INSERT INTO clients (nom, telephone, email, mot_de_passe_hash, role, type_client, whatsapp) 
-         VALUES ('Administrateur', '0000000000', $1, $2, 'admin', 'admin', '0000000000')
+         VALUES ('Administrateur', '0188441122', $1, $2, 'admin', 'admin', '0188441122')
          ON CONFLICT (telephone) DO NOTHING`,
         [process.env.ADMIN_EMAIL || 'admin@allopanier.bj', hash]
       )
-      console.log('Compte admin créé — téléphone: 0000000000 / mdp: Admin@2024')
+      console.log('Compte admin créé — téléphone: 0188441122 / mdp: Admin@2024')
     }
 
     app.listen(PORT, () => {

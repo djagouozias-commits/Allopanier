@@ -1,1 +1,1 @@
-export { genererRecuHTML, ouvrirRecuClient, ouvrirRecuAdmin } from './genererRecu'
+export { genererRecuHTML, ouvrirRecuClient, ouvrirRecuAdmin } from './genererRecu.jsx'

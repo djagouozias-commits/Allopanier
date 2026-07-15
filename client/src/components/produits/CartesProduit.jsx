@@ -1,5 +1,4 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
 import { ShoppingCart, Package } from 'lucide-react'
 import useCartStore from '../../store/useCartStore'
 import { formatPrix } from '../../lib/utils'
@@ -22,7 +21,7 @@ export default function CarteProduit({ produit }) {
   }, [produit.id])
 
   const handleAdd = (type, e) => {
-    e.preventDefault()
+    e.stopPropagation()
     addItem(produit, type, 1)
     toast.success(`Ajouté au panier`)
   }
@@ -31,47 +30,43 @@ export default function CarteProduit({ produit }) {
 
   return (
     <div className="card overflow-hidden hover:shadow-md transition-shadow group">
-      {/* Image */}
-      <Link to={`/produit/${produit.id}`}>
-        <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
-          {videoUrl ? (
-            <video
-              src={getImageUrl(videoUrl)}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              muted
-              loop
-              playsInline
-              autoPlay
-              preload="metadata"
-            />
-          ) : (
-            <img
-              src={imageUrl}
-              alt={produit.nom}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              onError={e => { e.target.src = 'https://placehold.co/400x300/E8F5E9/2E7D32?text=AlloPanier' }}
-            />
-          )}
-          {!produit.stock && (
-            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-              <span className="badge-rupture text-sm px-3 py-1">Rupture de stock</span>
-            </div>
-          )}
-          {produit.categorie_nom && (
-            <span className="absolute top-2 left-2 bg-white/90 text-gray-700 text-xs font-display font-semibold px-2 py-0.5 rounded-full">
-              {produit.categorie_nom}
-            </span>
-          )}
-        </div>
-      </Link>
+      {/* Image — pas de navigation */}
+      <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+        {videoUrl ? (
+          <video
+            src={getImageUrl(videoUrl)}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            muted
+            loop
+            playsInline
+            autoPlay
+            preload="metadata"
+          />
+        ) : (
+          <img
+            src={imageUrl}
+            alt={produit.nom}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={e => { e.target.src = 'https://placehold.co/400x300/E8F5E9/2E7D32?text=AlloPanier' }}
+          />
+        )}
+        {!produit.stock && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+            <span className="badge-rupture text-sm px-3 py-1">Rupture de stock</span>
+          </div>
+        )}
+        {produit.categorie_nom && (
+          <span className="absolute top-2 left-2 bg-white/90 text-gray-700 text-xs font-display font-semibold px-2 py-0.5 rounded-full">
+            {produit.categorie_nom}
+          </span>
+        )}
+      </div>
 
       {/* Contenu */}
       <div className="p-4">
-        <Link to={`/produit/${produit.id}`}>
-          <h3 className="font-display font-semibold text-gray-900 text-sm leading-snug mb-1 hover:text-primary-600 transition-colors line-clamp-2">
-            {produit.nom}
-          </h3>
-        </Link>
+        <h3 className="font-display font-semibold text-gray-900 text-sm leading-snug mb-1 line-clamp-2">
+          {produit.nom}
+        </h3>
 
         {produit.description && (
           <p className="text-xs text-gray-500 font-body mb-3 line-clamp-2">{produit.description}</p>
@@ -150,6 +145,40 @@ export default function CarteProduit({ produit }) {
               >
                 <Package size={13} />
                 Sac
+              </button>
+            </div>
+          )}
+
+          {produit.has_boite && produit.prix_boite && (
+            <div className="flex items-center justify-between gap-2 bg-amber-50 rounded-lg px-2 py-1.5">
+              <div>
+                <span className="font-display font-bold text-amber-700 text-sm">{formatPrix(produit.prix_boite)}</span>
+                <span className="text-xs text-gray-500 ml-1">boîte {produit.qte_boite ? `(${produit.qte_boite} u.)` : ''}</span>
+              </div>
+              <button
+                onClick={e => handleAdd('boite', e)}
+                disabled={!produit.stock}
+                className="flex items-center gap-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-display font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Package size={13} />
+                Boîte
+              </button>
+            </div>
+          )}
+
+          {produit.has_sachet && produit.prix_sachet && (
+            <div className="flex items-center justify-between gap-2 bg-teal-50 rounded-lg px-2 py-1.5">
+              <div>
+                <span className="font-display font-bold text-teal-700 text-sm">{formatPrix(produit.prix_sachet)}</span>
+                <span className="text-xs text-gray-500 ml-1">sachet {produit.qte_sachet ? `(${produit.qte_sachet} u.)` : ''}</span>
+              </div>
+              <button
+                onClick={e => handleAdd('sachet', e)}
+                disabled={!produit.stock}
+                className="flex items-center gap-1 bg-teal-600 hover:bg-teal-700 text-white text-xs font-display font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Package size={13} />
+                Sachet
               </button>
             </div>
           )}

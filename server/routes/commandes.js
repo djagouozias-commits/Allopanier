@@ -14,12 +14,17 @@ function genCode() {
 // POST /api/commandes
 router.post('/', authMiddleware, async (req, res) => {
   const { adresse_id, jour_livraison, tranche_horaire, est_jour_exceptionnel,
-          sous_total, poids_total_kg, frais_livraison, total, note_livraison, lignes } = req.body
-
-  console.log('Commande reçue:', { adresse_id, jour_livraison, tranche_horaire, est_jour_exceptionnel, sous_total, total })
+          sous_total, poids_total_kg, frais_livraison, total, note_livraison, lignes,
+          mode_paiement = 'especes', statut_paiement = 'A_PAYER' } = req.body
 
   if (!lignes?.length) return res.status(400).json({ message: 'Panier vide' })
   if (parseFloat(sous_total) < 500) return res.status(400).json({ message: 'Montant minimum : 500 FCFA' })
+
+  // Vérifier si le compte est bloqué
+  const clientCheck = await pool.query('SELECT compte_bloque, nb_commandes_non_livrees FROM clients WHERE id=$1', [req.user.id])
+  if (clientCheck.rows[0]?.compte_bloque) {
+    return res.status(403).json({ message: 'Votre compte est bloqué suite à 10 commandes non livrées. Contactez-nous sur WhatsApp.' })
+  }
 
   const creneauCheck = validerCreneauCommande(jour_livraison, tranche_horaire)
   if (!creneauCheck.ok) return res.status(400).json({ message: creneauCheck.message })
@@ -38,20 +43,18 @@ router.post('/', authMiddleware, async (req, res) => {
 
     const { rows } = await client.query(
       `INSERT INTO commandes (code_commande, client_id, adresse_id, statut, jour_livraison, tranche_horaire,
-        est_jour_exceptionnel, sous_total, poids_total_kg, frais_livraison, total, note_livraison)
-       VALUES ($1,$2,$3,'EN_ATTENTE',$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+        est_jour_exceptionnel, sous_total, poids_total_kg, frais_livraison, total, note_livraison,
+        mode_paiement, statut_paiement)
+       VALUES ($1,$2,$3,'EN_ATTENTE',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
       [
-        code,
-        req.user.id,
-        parseInt(adresse_id),
-        jour_livraison,
-        tranche_horaire,
+        code, req.user.id, parseInt(adresse_id),
+        jour_livraison, tranche_horaire,
         est_jour_exceptionnel === true || est_jour_exceptionnel === 'true' || est_jour_exceptionnel === 1,
-        parseFloat(sous_total),
-        parseFloat(poids_total_kg) || 0,
-        parseFloat(frais_livraison),
-        parseFloat(total),
-        note_livraison || null
+        parseFloat(sous_total), parseFloat(poids_total_kg) || 0,
+        parseFloat(frais_livraison), parseFloat(total),
+        note_livraison || null,
+        mode_paiement || 'especes',
+        statut_paiement || 'A_PAYER'
       ]
     )
     const commande = rows[0]

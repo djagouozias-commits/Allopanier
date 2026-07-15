@@ -54,6 +54,25 @@ export default function AdminProduits() {
     setModal(true)
   }
 
+  // Crée un produit brouillon si pas encore créé, pour permettre l'upload immédiat des médias
+  const ensureProduitId = async (currentForm) => {
+    if (savedProduitId) return savedProduitId
+    try {
+      const payload = { ...currentForm }
+      Object.keys(payload).forEach(k => { if (payload[k] === '') payload[k] = null })
+      // Valeurs minimales requises pour créer un brouillon
+      if (!payload.nom) payload.nom = 'Nouveau produit'
+      if (!payload.prix_unitaire) payload.prix_unitaire = 0
+      const r = await api.post('/produits', payload)
+      const id = r.data.produit.id
+      setSavedProduitId(id)
+      setEditData({ ...currentForm, id })
+      return id
+    } catch {
+      return null
+    }
+  }
+
   const openEdit = async (p) => {
     setEditData(p)
     setForm({ ...FORM_INIT, ...p })
@@ -208,30 +227,8 @@ export default function AdminProduits() {
 
       {/* Modal ajout/édition */}
       <Modal isOpen={modal} onClose={closeModal} title={editData ? 'Modifier le produit' : 'Nouveau produit'} size="xl">
-        <div className="space-y-5">
-          {/* Médias : photos + vidéo */}
-          <div className="border border-gray-200 rounded-xl p-4">
-            <h3 className="font-display font-semibold text-sm text-gray-700 mb-4">
-              Photos et vidéo
-              {!savedProduitId && (
-                <span className="ml-2 text-xs text-orange-500 font-body font-normal">
-                  (Enregistrez d'abord le produit pour ajouter des médias)
-                </span>
-              )}
-            </h3>
-            {savedProduitId ? (
-              <MediaGallery
-                produitId={savedProduitId}
-                medias={medias}
-                onUpdate={setMedias}
-              />
-            ) : (
-              <div className="text-center py-8 text-gray-400 font-body text-sm">
-                Enregistrez les informations du produit, puis ajoutez vos photos et vidéo.
-              </div>
-            )}
-          </div>
-
+      <div className="space-y-5">
+          {/* Infos produit en premier */}
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <label className="block text-sm font-display font-semibold text-gray-700 mb-1">Nom *</label>
@@ -315,6 +312,19 @@ export default function AdminProduits() {
               <input type="checkbox" {...cb('actif')} />
               <span className="text-sm font-body text-gray-700">Actif (visible sur le site)</span>
             </label>
+          </div>
+
+          {/* Médias : photos + vidéo — toujours accessible */}
+          <div className="border border-gray-200 rounded-xl p-4">
+            <h3 className="font-display font-semibold text-sm text-gray-700 mb-4">
+              Photos et vidéo
+            </h3>
+            <MediaGallery
+              produitId={savedProduitId}
+              medias={medias}
+              onUpdate={setMedias}
+              onNeedProduitId={() => ensureProduitId(form)}
+            />
           </div>
 
           <div className="flex gap-3 pt-2">

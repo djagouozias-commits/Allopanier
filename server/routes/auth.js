@@ -5,8 +5,9 @@ const pool = require('../db')
 const router = express.Router()
 
 function normaliserTelephone(tel) {
-  const clean = String(tel || '').replace(/\D/g, '')
-  if (!/^01[0-9]{8}$/.test(clean)) return null
+  const clean = String(tel || '').replace(/[\s\-\.]/g, '')
+  // Accepte tout numéro béninois : 10 chiffres commençant par 0
+  if (!/^0[1-9][0-9]{8}$/.test(clean)) return null
   return clean
 }
 

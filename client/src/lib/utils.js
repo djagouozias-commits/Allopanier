@@ -85,25 +85,27 @@ export function genererCodeCommande() {
   return `AP-${yyyymmdd}-${rand}`
 }
 
-// Téléphone béninois : 01 + 8 chiffres = 10 chiffres
-export const TELEPHONE_PREFIX = '01'
+// Téléphone béninois : 10 chiffres (indicatif 2 chiffres + 8 chiffres)
+// Opérateurs : 01, 61, 62, 90, 91, 95, 96, 97, 53, 54, 55, 64, 65, 66, 67, 68, 69, etc.
+export const TELEPHONE_PREFIX = ''
 
 export function formaterSuffixeTelephone(value) {
-  return String(value || '').replace(/\D/g, '').slice(0, 8)
+  return String(value || '').replace(/\D/g, '').slice(0, 10)
 }
 
 export function assemblerTelephone(suffix) {
   const s = formaterSuffixeTelephone(suffix)
-  return s.length === 8 ? `${TELEPHONE_PREFIX}${s}` : ''
+  return s.length === 10 ? s : ''
 }
 
 export function validerTelephone(tel) {
-  const clean = String(tel || '').replace(/\s/g, '')
-  return /^01[0-9]{8}$/.test(clean)
+  const clean = String(tel || '').replace(/[\s\-\.]/g, '')
+  // 10 chiffres, commence par 0 suivi d'un chiffre valide
+  return /^0[1-9][0-9]{8}$/.test(clean)
 }
 
 export function validerSuffixeTelephone(suffix) {
-  return formaterSuffixeTelephone(suffix).length === 8
+  return validerTelephone(suffix)
 }
 
 // Truncate text

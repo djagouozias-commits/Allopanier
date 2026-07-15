@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Package, Tag, ShoppingBag, Users, Map, Route, FileText, BarChart2, LogOut, Menu, X, Video, Zap } from 'lucide-react'
+import { LayoutDashboard, Package, Tag, ShoppingBag, Users, Map, Route, FileText, BarChart2, LogOut, Menu, X, Video, Zap, Crown } from 'lucide-react'
 import useAuthStore from '../../store/useAuthStore'
 import Logo from '../../components/ui/Logo'
 
@@ -16,6 +16,7 @@ const NAV = [
   { to: '/admin/publicite', label: 'Vidéo pub', icon: Video },
   { to: '/admin/comptabilite', label: 'Comptabilité', icon: BarChart2 },
   { to: '/admin/promoflash', label: 'PromoFlash', icon: Zap },
+  { to: '/admin/vip', label: '♦ Espace V.I.P', icon: Crown },
 ]
 
 export default function AdminLayout() {

@@ -247,5 +247,80 @@ router.put('/admin/vendeurs/:id', adminMiddleware, async (req, res) => {
   } catch { res.status(500).json({ message: 'Erreur serveur' }) }
 })
 
+// POST /api/promoflash/commandes — enregistrer une commande PromoFlash (retrait soi-même ou AlloPanier)
+router.post('/commandes', async (req, res) => {
+  const { mode = 'retrait_soi_meme', total = 0, lignes = [], nb_boutiques_visitees, nb_boutiques_total, client_id } = req.body
+
+  // Récupérer le client depuis le token si disponible
+  let clientId = client_id || null
+  const header = req.headers.authorization
+  if (header?.startsWith('Bearer ')) {
+    try {
+      const jwt = require('jsonwebtoken')
+      const payload = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET)
+      clientId = payload.id
+    } catch {}
+  }
+
+  try {
+    // Générer un code unique
+    const code = `PF-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 9999).toString().padStart(4, '0')}`
+
+    const { rows } = await pool.query(
+      `INSERT INTO promoflash_commandes (code_commande, client_id, mode, statut, total, nb_boutiques_visitees, nb_boutiques_total)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [code, clientId, mode, 'TERMINE', parseFloat(total) || 0, nb_boutiques_visitees || 0, nb_boutiques_total || 0]
+    )
+    const commande = rows[0]
+
+    // Insérer les lignes
+    for (const l of lignes) {
+      await pool.query(
+        `INSERT INTO promoflash_lignes (commande_id, produit_id, vendeur_id, prix_applique, quantite, nom_produit, vendeur_nom)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [commande.id, l.produit_id || null, l.vendeur_id || null, parseFloat(l.prix_applique) || 0, parseInt(l.quantite) || 1, l.nom_produit || '', l.vendeur_nom || '']
+      )
+    }
+
+    res.status(201).json({ commande, code })
+  } catch (err) {
+    console.error('Erreur commande PromoFlash:', err)
+    res.status(500).json({ message: 'Erreur serveur' })
+  }
+})
+
+// GET /api/promoflash/mes-commandes — historique PromoFlash du client connecté
+router.get('/mes-commandes', async (req, res) => {
+  let clientId = null
+  const header = req.headers.authorization
+  if (header?.startsWith('Bearer ')) {
+    try {
+      const jwt = require('jsonwebtoken')
+      const payload = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET)
+      clientId = payload.id
+    } catch {}
+  }
+  if (!clientId) return res.status(401).json({ message: 'Non authentifié' })
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM promoflash_commandes WHERE client_id=$1 ORDER BY created_at DESC`,
+      [clientId]
+    )
+    // Charger les lignes pour chaque commande
+    for (const cmd of rows) {
+      const { rows: lignes } = await pool.query(
+        `SELECT * FROM promoflash_lignes WHERE commande_id=$1`,
+        [cmd.id]
+      )
+      cmd.lignes = lignes
+    }
+    res.json({ commandes: rows })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ message: 'Erreur serveur' })
+  }
+})
+
 module.exports = router
 module.exports.calculerPrixDuJour = calculerPrixDuJour

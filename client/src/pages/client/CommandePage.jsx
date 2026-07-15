@@ -6,6 +6,7 @@ import useAuthStore from '../../store/useAuthStore'
 import { formatPrix, formatPoids, TOUS_JOURS, estJourExceptionnel, estCreneauBloque, getCreneauxBloquesAujourdhui, jourActuel, labelCreneau } from '../../lib/utils'
 import api from '../../lib/api'
 import MapModal from '../../components/ui/MapModal'
+import ModalPaiement from '../../components/ui/ModalPaiement'
 import toast from 'react-hot-toast'
 
 export default function CommandePage() {
@@ -19,6 +20,7 @@ export default function CommandePage() {
   const [tranche, setTranche] = useState('8h-12h')
   const [note, setNote] = useState('')
   const [loading, setLoading] = useState(false)
+  const [modalPaiementOpen, setModalPaiementOpen] = useState(false)
 
   // Nouvelle adresse
   const [showNouvAddr, setShowNouvAddr] = useState(false)
@@ -101,7 +103,7 @@ export default function CommandePage() {
     } catch { toast.error("Erreur lors de l'ajout") }
   }
 
-  const handleCommander = async () => {
+  const handleCommander = () => {
     if (!adresseId) { toast.error('Sélectionnez une adresse de livraison'); return }
     if (items.length === 0) { toast.error('Votre panier est vide'); return }
     if (sousTotal < 500) { toast.error('Montant minimum : 500 FCFA'); return }
@@ -109,7 +111,10 @@ export default function CommandePage() {
       toast.error(`Livraison ${jour} (${labelCreneau(tranche)}) indisponible — tournée déjà commencée`)
       return
     }
+    setModalPaiementOpen(true)
+  }
 
+  const handleConfirmerAvecPaiement = async (mode_paiement, statut_paiement) => {
     setLoading(true)
     try {
       const lignes = items.map(item => ({
@@ -133,13 +138,15 @@ export default function CommandePage() {
         total: Number(total),
         note_livraison: note || null,
         lignes,
+        mode_paiement,
+        statut_paiement,
       }
 
       const r = await api.post('/commandes', payload)
       clearCart()
+      setModalPaiementOpen(false)
       navigate(`/confirmation/${r.data.commande.code_commande}`)
     } catch (err) {
-      console.error('Erreur commande:', err.response?.data || err.message)
       toast.error(err.response?.data?.message || 'Erreur lors de la commande. Réessayez.')
     } finally {
       setLoading(false)
@@ -166,6 +173,13 @@ export default function CommandePage() {
         initialLat={mapInitPos.lat}
         initialLng={mapInitPos.lng}
         onValidate={handleValidatePosition}
+      />
+      <ModalPaiement
+        isOpen={modalPaiementOpen}
+        total={total}
+        loading={loading}
+        onConfirmer={handleConfirmerAvecPaiement}
+        onFermer={() => setModalPaiementOpen(false)}
       />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -389,11 +403,11 @@ export default function CommandePage() {
             <button onClick={handleCommander} disabled={loading || creneauActuelBloque}
               className="w-full mt-5 bg-primary-600 hover:bg-primary-700 text-white font-display font-bold py-4 rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-base">
               {loading && <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-              {loading ? 'En cours...' : 'Confirmer — Paiement à la livraison'}
+              {loading ? 'En cours...' : 'Confirmer'}
             </button>
 
             <p className="text-center text-xs text-gray-400 font-body mt-3">
-              Paiement en espèces uniquement à la livraison
+              Espèces à la livraison ou paiement mobile
             </p>
           </div>
         </div>

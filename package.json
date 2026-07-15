@@ -1,0 +1,13 @@
+{
+  "name": "allopanier",
+  "version": "1.0.0",
+  "description": "AlloPanier - Livraison à domicile au Bénin",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

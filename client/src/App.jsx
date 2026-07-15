@@ -37,6 +37,14 @@ import VendeurInscriptionPage from './pages/promoflash/VendeurInscriptionPage'
 import VendeurConnexionPage from './pages/promoflash/VendeurConnexionPage'
 import VendeurDashboardPage from './pages/promoflash/VendeurDashboardPage'
 
+// VIP
+import VIPPage from './pages/vip/VIPPage'
+import VIPPanierPage from './pages/vip/VIPPanierPage'
+import VIPCommandePage from './pages/vip/VIPCommandePage'
+import VIPConfirmationPage from './pages/vip/VIPConfirmationPage'
+import VIPMesCommandesPage from './pages/vip/VIPMesCommandesPage'
+import AdminVIP from './pages/admin/AdminVIP'
+
 // Layouts
 import ClientLayout from './components/layout/ClientLayout'
 import WhatsAppButton from './components/ui/WhatsAppButton'
@@ -103,6 +111,7 @@ export default function App() {
           <Route path="publicite" element={<AdminPublicite />} />
           <Route path="comptabilite" element={<AdminComptabilite />} />
           <Route path="promoflash" element={<AdminPromoFlash />} />
+          <Route path="vip" element={<AdminVIP />} />
         </Route>
 
         {/* PromoFlash — public + vendeurs */}
@@ -112,6 +121,15 @@ export default function App() {
         <Route path="/promoflash/vendre" element={<VendeurInscriptionPage />} />
         <Route path="/promoflash/vendeur/connexion" element={<VendeurConnexionPage />} />
         <Route path="/promoflash/vendeur/dashboard" element={<VendeurDashboardPage />} />
+
+        {/* VIP */}
+        <Route element={<ClientLayout />}>
+          <Route path="/vip" element={<VIPPage />} />
+          <Route path="/vip/panier" element={<RequireAuth><VIPPanierPage /></RequireAuth>} />
+          <Route path="/vip/commande" element={<RequireAuth><VIPCommandePage /></RequireAuth>} />
+          <Route path="/vip/confirmation/:codeCommande" element={<VIPConfirmationPage />} />
+          <Route path="/vip/mes-commandes" element={<RequireAuth><VIPMesCommandesPage /></RequireAuth>} />
+        </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

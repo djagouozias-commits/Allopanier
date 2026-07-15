@@ -89,10 +89,37 @@ router.put('/commandes/:id/statut', async (req, res) => {
   const valides = ['EN_ATTENTE', 'CONFIRMEE', 'EN_LIVRAISON', 'LIVREE', 'ANNULEE', 'PROBLEME']
   if (!valides.includes(statut)) return res.status(400).json({ message: 'Statut invalide' })
   try {
+    // Récupérer l'ancienne commande pour comparer
+    const { rows: avant } = await pool.query('SELECT statut, client_id, jour_livraison, tranche_horaire FROM commandes WHERE id=$1', [req.params.id])
+    if (!avant[0]) return res.status(404).json({ message: 'Commande introuvable' })
+
     const extra = statut === 'LIVREE' ? ', date_livraison_effective=NOW()' : ''
     await pool.query(`UPDATE commandes SET statut=$1${extra} WHERE id=$2`, [statut, req.params.id])
+
+    const clientId = avant[0].client_id
+    if (clientId) {
+      // Recompter les commandes non livrées de ce client
+      // = commandes dont le jour/heure prévus sont dépassés ET statut != LIVREE et != ANNULEE
+      // Compter toutes les commandes EN_ATTENTE/CONFIRMEE créées il y a plus de 7 jours (non livrées dans les temps)
+      const { rows: retardees } = await pool.query(`
+        SELECT COUNT(*) FROM commandes
+        WHERE client_id=$1
+          AND statut NOT IN ('LIVREE','ANNULEE')
+          AND date_commande < NOW() - INTERVAL '7 days'
+      `, [clientId])
+      const nb = parseInt(retardees[0]?.count || 0)
+      const bloque = nb >= 10
+      await pool.query(
+        'UPDATE clients SET nb_commandes_non_livrees=$1, compte_bloque=$2 WHERE id=$3',
+        [nb, bloque, clientId]
+      )
+    }
+
     res.json({ success: true })
-  } catch { res.status(500).json({ message: 'Erreur serveur' }) }
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ message: 'Erreur serveur' })
+  }
 })
 
 // DELETE /api/admin/commandes/:id

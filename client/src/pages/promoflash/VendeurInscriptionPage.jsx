@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, MapPin, Store, Upload, Zap } from 'lucide-react'
+import { Eye, EyeOff, MapPin, Store, Upload, Zap, ArrowLeft } from 'lucide-react'
 import api from '../../lib/api'
 import MapModal from '../../components/ui/MapModal'
 import toast from 'react-hot-toast'
@@ -69,6 +69,20 @@ export default function VendeurInscriptionPage() {
 
       <div className="min-h-screen bg-purple-50 py-10 px-4">
         <div className="max-w-xl mx-auto">
+          {/* Bouton retour / annuler en haut */}
+          <div className="flex items-center justify-between mb-6">
+            <button
+              onClick={() => navigate('/promoflash')}
+              className="flex items-center gap-2 text-purple-700 hover:text-purple-900 font-display font-semibold text-sm transition-colors"
+            >
+              <ArrowLeft size={16} />
+              Annuler et retourner
+            </button>
+            <Link to="/promoflash/vendeur/connexion" className="text-sm text-purple-600 font-body hover:underline">
+              Déjà un compte ?
+            </Link>
+          </div>
+
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Zap size={32} className="text-white" />
@@ -190,6 +204,11 @@ export default function VendeurInscriptionPage() {
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white font-display font-bold py-3.5 rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                 {loading && <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                 {loading ? 'Création...' : 'Créer mon compte vendeur'}
+              </button>
+
+              <button type="button" onClick={() => navigate('/promoflash')}
+                className="w-full border border-gray-300 text-gray-600 hover:bg-gray-50 font-display font-semibold py-3 rounded-xl transition-colors">
+                Annuler
               </button>
             </form>
 

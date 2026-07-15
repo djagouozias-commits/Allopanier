@@ -42,6 +42,9 @@ export function genererRecuHTML(commande, { titre = 'Reçu de commande', autoPri
   const clientEmail = commande.client_email || '—'
   const clientType = commande.client_type_client || commande.type_client || '—'
 
+  const estPaye = commande.statut_paiement === 'PAYE'
+  const labelPaiement = estPaye ? '✓ DÉJÀ PAYÉ — REÇU DE PAIEMENT' : 'À PAYER AU LIVREUR'
+
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -80,6 +83,8 @@ export function genererRecuHTML(commande, { titre = 'Reçu de commande', autoPri
     .totaux-row { display: flex; justify-content: space-between; padding: 7px 14px; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
     .totaux-row:last-child { border-bottom: none; }
     .totaux-final { background: #2E7D32; color: #fff; font-size: 15px; font-weight: 900; padding: 10px 14px; display: flex; justify-content: space-between; }
+    .statut-paye { background: #1B5E20; color: #fff; font-size: 13px; font-weight: 900; padding: 8px 14px; display: flex; justify-content: space-between; letter-spacing: 1px; }
+    .statut-apayer { background: #E65100; color: #fff; font-size: 13px; font-weight: 900; padding: 8px 14px; display: flex; justify-content: space-between; letter-spacing: 1px; }
     .footer { margin-top: 20px; border-top: 2px dashed #ccc; padding-top: 14px; text-align: center; }
     .payment-badge { display: inline-block; background: #E8F5E9; border: 1px solid #2E7D32; border-radius: 20px; padding: 5px 16px; font-size: 12px; color: #2E7D32; font-weight: 700; margin-bottom: 8px; }
     .instructions { background: #FFF9C4; border: 1px solid #F9A825; border-radius: 6px; padding: 8px 12px; margin: 10px 0; font-size: 12px; color: #5D4037; text-align: left; }
@@ -203,9 +208,10 @@ export function genererRecuHTML(commande, { titre = 'Reçu de commande', autoPri
       <span>${formatMontant(commande.frais_livraison)} FCFA</span>
     </div>
     <div class="totaux-final">
-      <span>TOTAL A PAYER AU LIVREUR</span>
+      <span>${labelPaiement}</span>
       <span>${formatMontant(commande.total)} FCFA</span>
     </div>
+    ${estPaye ? `<div class="statut-paye"><span>✓ MONTANT DÉJÀ RÉGLÉ PAR MOBILE MONEY</span><span>${formatMontant(commande.total)} FCFA</span></div>` : `<div class="statut-apayer"><span>⚡ À PAYER AU LIVREUR EN ESPÈCES</span><span>${formatMontant(commande.total)} FCFA</span></div>`}
   </div>
 
   ${commande.note_livraison ? `
@@ -219,7 +225,9 @@ export function genererRecuHTML(commande, { titre = 'Reçu de commande', autoPri
       <strong>Important</strong>
       Le client doit présenter le code <strong>${code}</strong> au livreur pour confirmer l'identité et valider la remise des produits.
     </div>
-    <div class="payment-badge">Paiement en espèces à la livraison</div>
+    <div class="payment-badge" style="${estPaye ? 'background:#1B5E20;border-color:#1B5E20;color:#fff;' : ''}">
+      ${estPaye ? '✓ DÉJÀ PAYÉ — Mobile Money' : 'À PAYER — Espèces à la livraison'}
+    </div>
     <p class="footer-note">Merci de votre confiance — AlloPanier | Bénin</p>
     <p class="footer-note">Imprimé le ${new Date().toLocaleDateString('fr-FR')}</p>
   </div>
@@ -235,20 +243,32 @@ ${autoPrint ? '<script>window.onload = function() { window.print(); }</script>' 
 </html>`
 }
 
+function ouvrirHtml(html, filename = 'recu.html') {
+  try {
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const win = window.open(url, '_blank')
+    if (!win) {
+      // Fallback téléchargement direct si popup bloquée
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 10000)
+  } catch (err) {
+    console.error('Erreur ouverture reçu:', err)
+  }
+}
+
 export function ouvrirRecuClient(commande) {
   const html = genererRecuHTML(commande, { titre: 'Reçu de commande' })
-  const win = window.open('', '_blank', 'width=750,height=900')
-  if (win) {
-    win.document.write(html)
-    win.document.close()
-  }
+  ouvrirHtml(html, `recu-${commande.code_commande || 'commande'}.html`)
 }
 
 export function ouvrirRecuAdmin(commande) {
   const html = genererRecuHTML(commande, { titre: 'Reçu de commande', autoPrint: true })
-  const win = window.open('', '_blank', 'width=750,height=900')
-  if (win) {
-    win.document.write(html)
-    win.document.close()
-  }
+  ouvrirHtml(html, `recu-admin-${commande.code_commande || 'commande'}.html`)
 }

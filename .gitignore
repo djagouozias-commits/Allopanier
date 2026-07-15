@@ -1,8 +1,29 @@
+# Dépendances
 node_modules/
-dist/
-.env
-*.env.local
-uploads/
-.kiro/
-generate-icons.cjs
+client/node_modules/
+server/node_modules/
+
+# Build
+client/dist/
+
+# Variables d'environnement (SECRETS)
+server/.env
+client/.env.local
+client/.env.production
+
+# Fichiers uploads locaux
+server/uploads/
+
+# Backup SQL
+*.sql
+
+# Logs
 *.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vite cache
+client/.vite/

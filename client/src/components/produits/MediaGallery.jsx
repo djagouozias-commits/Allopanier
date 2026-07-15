@@ -9,7 +9,7 @@ import toast from 'react-hot-toast'
  * - Jusqu'à 4 photos
  * - 1 vidéo max 15 secondes
  */
-export default function MediaGallery({ produitId, medias = [], onUpdate }) {
+export default function MediaGallery({ produitId, medias = [], onUpdate, onNeedProduitId }) {
   const [uploading, setUploading] = useState(false)
   const [dragOver, setDragOver] = useState(null) // 'photos' | 'video'
   const [previewVideo, setPreviewVideo] = useState(null)
@@ -20,7 +20,12 @@ export default function MediaGallery({ produitId, medias = [], onUpdate }) {
   const video = medias.find(m => m.type === 'video')
 
   const uploadFichiers = async (photosFiles, videoFile) => {
-    if (!produitId) { toast.error('Enregistrez d\'abord le produit avant d\'ajouter des médias'); return }
+    // Si pas encore de produit, en créer un brouillon d'abord
+    let pid = produitId
+    if (!pid && onNeedProduitId) {
+      pid = await onNeedProduitId()
+    }
+    if (!pid) { toast.error('Impossible de créer le produit. Vérifiez les champs obligatoires.'); return }
 
     // Validation photos
     if (photosFiles?.length > 0) {
@@ -42,7 +47,7 @@ export default function MediaGallery({ produitId, medias = [], onUpdate }) {
       if (photosFiles) for (const f of Array.from(photosFiles)) fd.append('photos', f)
       if (videoFile) fd.append('video', videoFile)
 
-      const r = await api.post(`/medias/produit/${produitId}`, fd, {
+      const r = await api.post(`/medias/produit/${pid}`, fd, {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
 
@@ -134,7 +139,8 @@ export default function MediaGallery({ produitId, medias = [], onUpdate }) {
                 )}
                 <button
                   onClick={() => supprimerMedia(m.id, 'photo')}
-                  className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-1 right-1 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors shadow-sm"
+                  title="Supprimer cette photo"
                 >
                   <Trash2 size={11} />
                 </button>

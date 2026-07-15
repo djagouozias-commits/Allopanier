@@ -126,21 +126,26 @@ export default function ConfirmationPage() {
               <span className="font-semibold">{formatF(commande.frais_livraison)}</span>
             </div>
             <div className="flex justify-between font-display font-bold text-base pt-2 border-t border-gray-200">
-              <span className="text-gray-900">Total à payer au livreur</span>
+              <span className="text-gray-900">Total</span>
               <span className="text-green-700 text-xl">{formatF(commande.total)}</span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Rappel */}
-      <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center mb-6">
-        <p className="text-sm font-body text-green-800 font-semibold">
-          Paiement en espèces à la livraison
-        </p>
-        <p className="text-xs text-green-600 font-body mt-1">
-          Le livreur vous contactera avant d'arriver.
-        </p>
+      {/* Rappel paiement */}
+      <div className={`border rounded-xl p-4 text-center mb-6 ${commande?.statut_paiement === 'PAYE' ? 'bg-green-700 border-green-600' : 'bg-green-50 border-green-200'}`}>
+        {commande?.statut_paiement === 'PAYE' ? (
+          <>
+            <p className="text-sm font-body text-white font-bold">✓ Commande déjà payée — Mobile Money</p>
+            <p className="text-xs text-green-200 font-body mt-1">Le reçu mentionnera DÉJÀ PAYÉ.</p>
+          </>
+        ) : (
+          <>
+            <p className="text-sm font-body text-green-800 font-semibold">Paiement en espèces à la livraison</p>
+            <p className="text-xs text-green-600 font-body mt-1">Le livreur vous contactera avant d'arriver.</p>
+          </>
+        )}
       </div>
 
       {/* Boutons */}

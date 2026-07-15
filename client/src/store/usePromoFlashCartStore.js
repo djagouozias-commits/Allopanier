@@ -8,8 +8,12 @@ const usePromoFlashCartStore = create(
 
       addItem: (produit) => {
         const exists = get().items.find(i => i.produit.id === produit.id)
-        if (exists) return false
-        set({ items: [...get().items, { produit, prix: produit.prix_actuel }] })
+        if (exists) {
+          // Incrémenter la quantité si déjà présent
+          set({ items: get().items.map(i => i.produit.id === produit.id ? { ...i, quantite: (i.quantite || 1) + 1 } : i) })
+          return true
+        }
+        set({ items: [...get().items, { produit, prix: produit.prixDuJour || produit.prix_actuel || 0, quantite: 1 }] })
         return true
       },
 
@@ -17,9 +21,9 @@ const usePromoFlashCartStore = create(
 
       clearCart: () => set({ items: [] }),
 
-      getTotal: () => get().items.reduce((s, i) => s + (i.prix || 0), 0),
+      getTotal: () => get().items.reduce((s, i) => s + ((i.prix || 0) * (i.quantite || 1)), 0),
 
-      getItemCount: () => get().items.length,
+      getItemCount: () => get().items.reduce((s, i) => s + (i.quantite || 1), 0),
     }),
     { name: 'promoflash-panier' }
   )
