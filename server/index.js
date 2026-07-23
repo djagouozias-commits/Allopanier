@@ -10,7 +10,12 @@ const PORT = process.env.PORT || 5000
 // Middlewares
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
-    ? [process.env.FRONTEND_URL || '*', /\.vercel\.app$/]
+    ? [
+        process.env.FRONTEND_URL,
+        /\.netlify\.app$/,
+        /\.vercel\.app$/,
+        /\.onrender\.com$/,
+      ].filter(Boolean)
     : true,
   credentials: true
 }))
