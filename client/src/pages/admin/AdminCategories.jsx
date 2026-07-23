@@ -76,7 +76,8 @@ export default function AdminCategories() {
       </div>
 
       <div className="card overflow-hidden">
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[420px]">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               {['Icône', 'Nom', 'Ordre', 'Statut', 'Actions'].map(h => (
@@ -113,6 +114,7 @@ export default function AdminCategories() {
         {categories.length === 0 && (
           <div className="text-center py-12 text-gray-400 font-body">Aucune catégorie. Créez-en une.</div>
         )}
+        </div>
       </div>
 
       <Modal isOpen={modal} onClose={() => setModal(false)} title={editData ? 'Modifier la catégorie' : 'Nouvelle catégorie'}>

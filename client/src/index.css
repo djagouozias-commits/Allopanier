@@ -69,6 +69,11 @@
   }
 }
 
+/* Barre navigation bas — safe area pour les téléphones avec encoche (iPhone X+, Android) */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* Leaflet fix */
 .leaflet-container {
   z-index: 0;
